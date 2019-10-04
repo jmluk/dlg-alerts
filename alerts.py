@@ -15,7 +15,7 @@ now = datetime.datetime.now()
 mydb = mysql.connector.connect(
    host="localhost",
    user="dlg",
-   passwd="cheese",
+   passwd="dlg",
    database="dlg"
 )
 
