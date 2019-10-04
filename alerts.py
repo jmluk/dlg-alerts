@@ -1,39 +1,40 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
 from sqlalchemy import create_engine
 from json import dumps
 import datetime
+import mysql.connector
 
-db_connect = create_engine('sqlite:///alerts.db')
 app = Flask(__name__)
 api = Api(app)
 
 now = datetime.datetime.now()
 
-
-def create_db():
-    conn = db_connect.connect()  # connect to database
-    query = conn.execute('create table alerts(datetime text, description text)')
-    conn.close()
+mydb = mysql.connector.connect(
+   host="localhost",
+   user="dlg",
+   passwd="cheese",
+   database="dlg"
+)
 
 
 class Alarm(Resource):
-    def get(self):
-        conn = db_connect.connect()
-        query = conn.execute("select datetime, description from alerts;")
-        result = {'data': [dict(zip(tuple(query.keys()), i)) for i in query.cursor]}
-        return jsonify(result)
 
     def post(self):
-        conn = db_connect.connect()
         print(request.json)
         vDateTime = now.strftime("%Y-%m-%d %H:%M")
         vDescription = request.json['description']
+        vSeverity = request.json['severity']
 
-        query = conn.execute("insert into alerts values('" + vDateTime + "','" + vDescription + "');")
-        return {'status': 'success'}
+        query = "insert into alerts(datetime,description,severity,policy,accountname,actionname,eventType,displayname,eventTime,application,tier,node,db) values('" + vDateTime + "','" + vDescription + "','" + vSeverity + "','" + request.json['policy'] + "','" + request.json['accountname'] + "','" + request.json['actionname'] + "','" + request.json['eventType'] + "','" + request.json['displayName'] + "','" + request.json['eventTime'] + "','" + request.json['application'] + "','" + request.json['tier'] + "','" + request.json['node'] + "','" + request.json['db'] + "')"
+
+        mycursor = mydb.cursor()
+        mycursor.execute(query)
+        mydb.commit()
+
+        return 200
 
 
 api.add_resource(Alarm, '/alarm')
